@@ -479,7 +479,7 @@ class Translate {
             }
             $cacheQ = Functions::prepareParamsForCache($originalparams,$tp);
             // BVB
-            $q = $db->query('SELECT *, DATEDIFF(NOW(),tstamp) AS daydiff FROM '.$tp.'cache WHERE url like \''.\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('HTTP_HOST').'@%\' and params='.$cacheQ);
+            $q = $db->query('SELECT *, DATEDIFF(NOW(),tstamp) AS daydiff FROM '.$tp.'cache WHERE url like \''.addslashes(\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('HTTP_HOST')).'@%\' and params='.$cacheQ);
             //$q = $db->query('SELECT *, DATEDIFF(NOW(),tstamp) AS daydiff FROM '.$tp.'cache WHERE params='.$cacheQ);
             $row = $db->fetch($q);
             if ($row) {
