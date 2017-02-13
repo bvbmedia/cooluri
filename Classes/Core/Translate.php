@@ -421,6 +421,7 @@ class Translate {
         if (!empty(self::$conf->cooluris) && self::$conf->cooluris==1 && !$dontconvert) {
             // if cache is allowed, we'll look for an uri
             $uriFromCache = $this->getCachedUri($params, $forceUpdate);
+
             $cacheduri = false;
             $updatecacheid = false;
             if ($uriFromCache!==null) {
@@ -434,7 +435,6 @@ class Translate {
                     return $uriFromCache;
                 }
             }
-
             $uri = new URI($params);
             $this->translateDefaults($uri);
             $this->translatePredefinedParams($uri);
@@ -470,7 +470,6 @@ class Translate {
             // cache is valid for only a sort period of time, after that time we need to do a recheck
             $checkfornew = !empty(self::$conf->cache->params2cool)&&!empty(self::$conf->cache->params2cool->checkforchangeevery)?(string)self::$conf->cache->params2cool->checkforchangeevery:0;
             $originalparams = $params;
-
             // we don't cache params
             if (empty(self::$conf->cache->cacheparams) || self::$conf->cache->cacheparams!=1) {
                 if (!self::$coolParamsKeys) {
@@ -479,9 +478,10 @@ class Translate {
                 $originalparams = Functions::array_intersect_key($originalparams,self::$coolParamsKeys);
             }
             $cacheQ = Functions::prepareParamsForCache($originalparams,$tp);
-            $q = $db->query('SELECT *, DATEDIFF(NOW(),tstamp) AS daydiff FROM '.$tp.'cache WHERE params='.$cacheQ);
+            // BVB
+            $q = $db->query('SELECT *, DATEDIFF(NOW(),tstamp) AS daydiff FROM '.$tp.'cache WHERE url like \''.\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('HTTP_HOST').'@%\' and params='.$cacheQ);
+            //$q = $db->query('SELECT *, DATEDIFF(NOW(),tstamp) AS daydiff FROM '.$tp.'cache WHERE params='.$cacheQ);
             $row = $db->fetch($q);
-
             if ($row) {
                 if ($row['daydiff']==NULL) {
                     $row['daydiff'] = 2147483647; // daydiff isn't set, we force new check

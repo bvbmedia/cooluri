@@ -291,7 +291,6 @@ class CoolUri
                     $domain = self::getDomain((int)$pars['id']);
                 }
             }
-
             if (self::$confArray['MULTIDOMAIN']) {
                 \TYPO3\CMS\Core\Utility\GeneralUtility::devLog('MultiDomain on', 'CoolUri');
                 \TYPO3\CMS\Core\Utility\GeneralUtility::devLog('Domain: ' . $domain, 'CoolUri');
@@ -430,6 +429,8 @@ class CoolUri
                 $counter++;
             }
             $page=$firstRecord;
+            //error_log(print_r($page,1));
+
 
             if ($page['domainName'] && !$page['redirectTo']) {
                 $resDom = preg_replace('~^.*://(.*)/?$~', '\\1', preg_replace('~/$~', '', $page['domainName']));
