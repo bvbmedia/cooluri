@@ -295,6 +295,24 @@ class CoolUri
             if (self::$confArray['MULTIDOMAIN']) {
                 \TYPO3\CMS\Core\Utility\GeneralUtility::devLog('MultiDomain on', 'CoolUri');
                 \TYPO3\CMS\Core\Utility\GeneralUtility::devLog('Domain: ' . $domain, 'CoolUri');
+
+                // todo: bvb hack so multisite + multidomain works
+                $params['LD']['domain']=self::getDomain((int)$pars['id']);
+                //$params['LD']['domain']=\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('HTTP_HOST');
+                //$params['LD']['domain']=
+                if (!empty($params['LD']['domain'])) {
+                    $domain=$params['LD']['domain'];
+                } elseif (!empty($pars['MP'])) {
+                    // found MP call - get ID of page which mounts
+                    $mpSource=(int)substr($pars['MP'], strpos($pars['MP'], '-')+1);
+                    if ($mpSource>0) {
+                        $domain=self::getDomain($mpSource);
+                    } else {
+                        $domain=self::getDomain((int)$pars['id']);
+                    }
+                } else {
+                    $domain=self::getDomain((int)$pars['id']);
+                }
                 if (empty(\Bednarik\Cooluri\Core\Translate::$conf->cache->prefix)) {
                     self::simplexml_addChild(\Bednarik\Cooluri\Core\Translate::$conf->cache, 'prefix', $domain . '@');
                 } else {
@@ -303,6 +321,8 @@ class CoolUri
             } elseif (\Bednarik\Cooluri\Core\Translate::$conf->domainlanguages) {
                 self::prefixWithLangDomain($pars, $domain);
             }
+            //bvb 2015-12-06
+            \Bednarik\Cooluri\Core\Translate::$conf->cache->prefix=$domain.'@';
             $params['LD']['totalURL'] = $lt->params2cool($pars, '', false) . (!empty($anch[1]) ? '#' . $anch[1] : '');
 
             \TYPO3\CMS\Core\Utility\GeneralUtility::devLog('Found URL: ' . $params['LD']['totalURL'], 'CoolUri');
@@ -397,7 +417,19 @@ class CoolUri
             \TYPO3\CMS\Core\Utility\GeneralUtility::devLog('Looking for domain on page ' . $id, 'CoolUri');
 
             $q = $db->exec_SELECTquery('pages.title, pages.pid, pages.is_siteroot, pages.uid AS id, sys_domain.domainName, sys_domain.redirectTo', 'pages LEFT JOIN sys_domain ON pages.uid=sys_domain.pid', 'pages.uid=' . $id . $enable . ' AND (sys_domain.hidden=0 OR sys_domain.hidden IS NULL)', '', 'sys_domain.sorting');
-            $page = $db->sql_fetch_assoc($q);
+            //$page = $db->sql_fetch_assoc($q);
+            $counter=0;
+            while ($page=$db->sql_fetch_assoc($q)) {
+                if (!$counter) {
+                    $firstRecord=$page;
+                }
+                if ($page['domainName']==\TYPO3\CMS\Core\Utility\GeneralUtility::getIndpEnv('HTTP_HOST')) {
+                    $firstRecord=$page;
+                    break;
+                }
+                $counter++;
+            }
+            $page=$firstRecord;
 
             if ($page['domainName'] && !$page['redirectTo']) {
                 $resDom = preg_replace('~^.*://(.*)/?$~', '\\1', preg_replace('~/$~', '', $page['domainName']));

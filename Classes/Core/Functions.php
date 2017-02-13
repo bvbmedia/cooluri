@@ -259,6 +259,14 @@ class Functions {
   }
 
   public static function pageNotFound($lConf) {
+      // BVB hook
+      if (is_array($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/cooluri/class.tx_cooluri.php']['pageNotFoundPreProc'])) {
+          $params=array();
+          foreach ($GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/cooluri/class.tx_cooluri.php']['pageNotFoundPreProc'] as $funcRef) {
+              \TYPO3\CMS\Core\Utility\GeneralUtility::callUserFunction($funcRef, $params, $this);
+          }
+      }
+      // BVB hook eof
       if (!empty($lConf->cache->pagenotfound)) {
           switch ((string)$lConf->cache->pagenotfound->behavior['type']) {
               case 'message': $res = (string)$lConf->cache->pagenotfound->behavior; break;
